@@ -1,38 +1,231 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 Sandbox</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for a more integrated look */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: #1a202c; /* A dark gray that matches the editor */
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background-color: #4a5568; /* A lighter gray for the thumb */
+            border-radius: 4px;
+            border: 2px solid #1a202c;
+        }
+
+        /* Define animations for the run panel */
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(0); }
+            to { transform: translateY(-100%); }
+        }
+        
+        /* Classes to control animation state */
+        #run-view.active {
+            animation: slideDown 0.3s forwards ease-out;
+        }
+        #run-view.inactive {
+            animation: slideUp 0.3s forwards ease-out;
+        }
+
+        /* New styles for resizable layout and console */
+        #main-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        #editor-container {
+            flex-shrink: 0; /* Prevent shrinking */
+            min-height: 50px; /* Minimum height for editor */
+        }
+        #console-container {
+            flex-shrink: 0; /* Prevent shrinking */
+            min-height: 50px; /* Minimum height for console */
+            flex-grow: 1; /* Allow console to grow if editor shrinks */
+        }
+        #resizer {
+            cursor: ns-resize;
+            height: 8px;
+            background-color: #2d3748; /* gray-800 */
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+        }
+        #resizer:hover {
+            background-color: #4299e1; /* blue-500 */
+        }
+        #console-output {
+            white-space: pre-wrap; /* Wrap long lines */
+            word-break: break-all; /* Break long words */
+        }
+        #console-output::-webkit-scrollbar {
+            width: 8px;
+        }
+        #console-output::-webkit-scrollbar-track {
+            background: #1f2937; /* gray-800 */
+        }
+        #console-output::-webkit-scrollbar-thumb {
+            background-color: #4b5563; /* gray-600 */
+            border-radius: 4px;
+        }
+        /* Log message styles */
+        .log-error { color: #f87171; } /* red-400 */
+        .log-warn { color: #fbbf24; } /* amber-400 */
+        .log-info { color: #60a5fa; } /* blue-400 */
+        .log-debug { color: #9ca3af; } /* gray-400 */
+    </style>
+</head>
+<body class="bg-gray-900 text-white font-sans h-screen w-screen overflow-hidden flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-gray-800 p-2 sm:p-3 shadow-lg flex items-center justify-between z-30 flex-shrink-0">
+        <h1 class="text-lg sm:text-xl font-bold text-gray-300">HTML5 Sandbox</h1>
+        <div id="controls-container" class="flex items-center space-x-2">
+            <!-- Editor Buttons -->
+            <div id="editor-buttons" class="flex items-center space-x-2">
+                <button id="paste-button" title="Paste & Run" class="p-2 bg-teal-600 hover:bg-teal-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-teal-500 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                </button>
+                <button id="upload-button" title="Upload & Run" class="p-2 bg-indigo-600 hover:bg-indigo-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500 transition-colors">
+                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                </button>
+                <button id="go-button" title="Run Code" class="p-2 bg-blue-600 hover:bg-blue-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </button>
+                <button id="copy-button" title="Copy Code" class="p-2 bg-cyan-600 hover:bg-cyan-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-cyan-500 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                </button>
+                <button id="delete-button" title="Delete" class="p-2 bg-red-600 hover:bg-red-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-red-500 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+                <input type="file" id="file-input" accept=".html" class="hidden">
+            </div>
+            <!-- Close Button -->
+            <button id="close-button" title="Close Runner" class="hidden p-2 bg-red-600 hover:bg-red-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-red-500 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow relative overflow-hidden">
+        <div id="main-container">
+            <!-- Editor View -->
+            <div id="editor-container" class="h-3/5 p-2 sm:p-4">
+                <textarea id="code-editor" class="w-full h-full bg-gray-900 border-2 border-gray-700 rounded-md p-4 font-mono text-base text-green-300 resize-none focus:outline-none focus:border-blue-500 transition-colors" spellcheck="false"></textarea>
+            </div>
+            
+            <!-- Resizer Handle -->
+            <div id="resizer"></div>
+
+            <!-- Console View -->
+            <div id="console-container" class="h-2/5 flex flex-col bg-gray-800/50">
+                <div class="flex items-center justify-between p-2 bg-gray-800 border-t-2 border-gray-700 flex-shrink-0">
+                    <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider">Console</h2>
+                    <div class="flex items-center space-x-2">
+                        <button id="copy-console-button" title="Copy Console" class="p-1.5 bg-gray-600 hover:bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-cyan-500 transition-colors">
+                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        </button>
+                        <button id="download-console-button" title="Download Console" class="p-1.5 bg-gray-600 hover:bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        </button>
+                        <button id="clear-console-button" title="Clear Console" class="p-1.5 bg-gray-600 hover:bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-red-500 transition-colors">
+                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="console-output" class="flex-grow p-2 font-mono text-sm overflow-y-auto"></div>
+            </div>
+        </div>
+        
+        <!-- Run View (Overlay) -->
+        <div id="run-view" class="absolute top-0 left-0 h-full w-full bg-white z-20" style="transform: translateY(-100%); display: none;">
+            <iframe id="sandbox-iframe" class="h-full w-full border-0" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-popups-to-escape-sandbox"></iframe>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- ELEMENT REFERENCES ---
+            const pasteButton = document.getElementById('paste-button');
+            const uploadButton = document.getElementById('upload-button');
+            const goButton = document.getElementById('go-button');
+            const copyButton = document.getElementById('copy-button');
+            const deleteButton = document.getElementById('delete-button');
+            const closeButton = document.getElementById('close-button');
+            const fileInput = document.getElementById('file-input');
+            const runView = document.getElementById('run-view');
+            const codeEditor = document.getElementById('code-editor');
+            const sandboxIframe = document.getElementById('sandbox-iframe');
+            const editorButtons = document.getElementById('editor-buttons');
+            const consoleOutput = document.getElementById('console-output');
+            const copyConsoleButton = document.getElementById('copy-console-button');
+            const downloadConsoleButton = document.getElementById('download-console-button');
+            const clearConsoleButton = document.getElementById('clear-console-button');
+            const resizer = document.getElementById('resizer');
+            const editorContainer = document.getElementById('editor-container');
+
+            // --- DEFAULT CODE ---
+            const defaultCode = `<!DOCTYPE html>
 <html>
 <head>
     <title>Google Drive File Lister</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <style>
+        #api-key-modal { transition: opacity 0.3s ease; }
+        .modal-content { transform: translateY(-20px); transition: transform 0.3s ease; }
+        #api-key-modal.visible { opacity: 1; pointer-events: auto; }
+        #api-key-modal.visible .modal-content { transform: translateY(0); }
+    </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans p-8">
+
+    <!-- API Key Modal -->
+    <div id="api-key-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none">
+        <div class="modal-content bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h2 class="text-xl font-bold mb-4">Google API Client ID Required</h2>
+            <p class="text-gray-600 mb-4">Please provide your Google Cloud Client ID to use this application. You can get one from the <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="text-blue-500 hover:underline">Google Cloud Console</a>.</p>
+            <input type="text" id="api-key-input" placeholder="Enter your Client ID here" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="mt-4 flex justify-end">
+                <button id="save-api-key-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">Save and Continue</button>
+            </div>
+        </div>
+    </div>
+
     <div class="max-w-4xl mx-auto">
         <header class="mb-8 text-center">
             <h1 class="text-3xl font-bold text-gray-700">Google Drive File Lister</h1>
             <p class="text-gray-500 mt-2">Sign in to view the first 15 files from your Google Drive root folder.</p>
         </header>
 
-        <div id="auth-container" class="mb-6 flex justify-center space-x-4">
+        <div id="auth-container" class="mb-6 flex justify-center items-center space-x-4">
             <button id="authorize_button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition-transform transform hover:scale-105" style="visibility: hidden;">Sign In with Google</button>
             <button id="signout_button" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition-transform transform hover:scale-105" style="display: none;">Sign Out</button>
+            <button id="change-api-key-button" title="Change API Key" class="p-2 bg-gray-500 hover:bg-gray-600 text-white rounded">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
         </div>
 
         <main id="content" class="bg-white p-6 rounded-lg shadow-md" style="display: none;">
             <h2 class="text-xl font-semibold mb-4 border-b pb-2">Your Files</h2>
-            <div id="file-list-container">
-                <!-- Files will be listed here -->
-            </div>
+            <div id="file-list-container"></div>
             <p id="loading-state" class="text-gray-500 text-center py-4">Loading files...</p>
         </main>
     </div>
 
     <script type="text/javascript">
-        // --- CONFIGURATION ---
-        // IMPORTANT: Replace with your Google API Client ID from https://console.cloud.google.com/apis/credentials
-        const CLIENT_ID = '<YOUR_CLIENT_ID_HERE>';
-        
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
-
+        
+        let CLIENT_ID = '';
         let tokenClient;
         let gapiInited = false;
         let gisInited = false;
@@ -42,16 +235,54 @@
         const contentDiv = document.getElementById('content');
         const fileListContainer = document.getElementById('file-list-container');
         const loadingState = document.getElementById('loading-state');
+        const apiKeyModal = document.getElementById('api-key-modal');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const saveApiKeyButton = document.getElementById('save-api-key-button');
+        const changeApiKeyButton = document.getElementById('change-api-key-button');
 
-        // --- GAPI & GIS INITIALIZATION ---
+        // --- API Key Communication with Parent Window ---
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'apiKeyResponse') {
+                const apiKey = event.data.key;
+                if (apiKey) {
+                    CLIENT_ID = apiKey;
+                    apiKeyInput.value = apiKey;
+                    initializeApis();
+                } else {
+                    showApiKeyModal();
+                }
+            }
+        });
+
+        function showApiKeyModal() {
+            apiKeyModal.style.display = 'flex';
+            setTimeout(() => apiKeyModal.classList.add('visible'), 10);
+        }
+
+        function hideApiKeyModal() {
+            apiKeyModal.classList.remove('visible');
+            setTimeout(() => { apiKeyModal.style.display = 'none'; }, 300);
+        }
+
+        function saveApiKey() {
+            const newApiKey = apiKeyInput.value.trim();
+            if (newApiKey) {
+                window.parent.postMessage({ type: 'setApiKey', key: newApiKey }, '*');
+                CLIENT_ID = newApiKey;
+                hideApiKeyModal();
+                initializeApis();
+            } else {
+                alert('Please enter a valid Client ID.');
+            }
+        }
+        
+        // --- Google API Initialization ---
         function gapiLoaded() {
             gapi.load('client', initializeGapiClient);
         }
 
         async function initializeGapiClient() {
-            await gapi.client.init({
-                discoveryDocs: [DISCOVERY_DOC],
-            });
+            await gapi.client.init({ discoveryDocs: [DISCOVERY_DOC] });
             gapiInited = true;
             maybeEnableButtons();
         }
@@ -65,6 +296,32 @@
             gisInited = true;
             maybeEnableButtons();
         }
+        
+        function loadScripts() {
+            document.querySelectorAll('script[src^="https://apis.google.com"], script[src^="https://accounts.google.com"]').forEach(s => s.remove());
+
+            const gapiScript = document.createElement('script');
+            gapiScript.src = 'https://apis.google.com/js/api.js';
+            gapiScript.async = true;
+            gapiScript.defer = true;
+            gapiScript.onload = gapiLoaded;
+            document.body.appendChild(gapiScript);
+
+            const gisScript = document.createElement('script');
+            gisScript.src = 'https://accounts.google.com/gsi/client';
+            gisScript.async = true;
+            gisScript.defer = true;
+            gisScript.onload = gisLoaded;
+            document.body.appendChild(gisScript);
+        }
+        
+        function initializeApis() {
+            if (CLIENT_ID) {
+                gapiInited = false;
+                gisInited = false;
+                loadScripts();
+            }
+        }
 
         function maybeEnableButtons() {
             if (gapiInited && gisInited) {
@@ -72,16 +329,10 @@
             }
         }
         
-        // --- AUTHENTICATION ---
+        // --- Auth & API Logic ---
         function handleAuthClick() {
-            if (CLIENT_ID === '<YOUR_CLIENT_ID_HERE>') {
-                alert('Please replace "<YOUR_CLIENT_ID_HERE>" with your actual Google API Client ID in the code.');
-                return;
-            }
             tokenClient.callback = async (resp) => {
-                if (resp.error !== undefined) {
-                    throw (resp);
-                }
+                if (resp.error !== undefined) { throw (resp); }
                 signoutButton.style.display = 'inline-block';
                 authButton.textContent = 'Refresh Token';
                 await listFiles();
@@ -106,7 +357,6 @@
             }
         }
 
-        // --- API CALL ---
         async function listFiles() {
             contentDiv.style.display = 'block';
             fileListContainer.innerHTML = '';
@@ -127,10 +377,10 @@
                     files.forEach((file) => {
                         const li = document.createElement('li');
                         li.className = 'flex items-center p-2 rounded-md hover:bg-gray-50';
-                        li.innerHTML = `
-                            <img src="${file.iconLink}" class="w-6 h-6 mr-3" alt="file icon">
-                            <a href="${file.webViewLink}" target="_blank" class="text-blue-600 hover:underline flex-grow">${file.name}</a>
-                        `;
+                        li.innerHTML = \`
+                            <img src="\${file.iconLink}" class="w-6 h-6 mr-3" alt="file icon">
+                            <a href="\${file.webViewLink}" target="_blank" class="text-blue-600 hover:underline flex-grow">\${file.name}</a>
+                        \`;
                         ul.appendChild(li);
                     });
                     fileListContainer.appendChild(ul);
@@ -139,15 +389,236 @@
                 }
             } catch (err) {
                 console.error('API Error:', err);
-                loadingState.textContent = `Error: ${err.result?.error?.message || err.message}. See console for details.`;
+                loadingState.textContent = \`Error: \${err.result?.error?.message || err.message}. See console for details.\`;
             }
         }
 
-        // --- EVENT LISTENERS ---
+        // --- INITIALIZATION & EVENT LISTENERS ---
+        saveApiKeyButton.addEventListener('click', saveApiKey);
+        changeApiKeyButton.addEventListener('click', showApiKeyModal);
         authButton.addEventListener('click', handleAuthClick);
         signoutButton.addEventListener('click', handleSignoutClick);
+        
+        // On load, ask the parent sandbox for the API key.
+        window.parent.postMessage({ type: 'getApiKey' }, '*');
+    <\/script>
+</body>
+</html>`;
+            
+            codeEditor.value = defaultCode;
+
+            // --- CONSOLE LOGIC ---
+            const logToConsole = (message, level = 'log') => {
+                const logEntry = document.createElement('div');
+                const timestamp = new Date().toLocaleTimeString();
+                logEntry.innerHTML = `<span class="text-gray-500 mr-2">${timestamp}</span><span class="log-${level}">${message}</span>`;
+                logEntry.className = 'py-1 border-b border-gray-700/50';
+                consoleOutput.appendChild(logEntry);
+                consoleOutput.scrollTop = consoleOutput.scrollHeight; // Auto-scroll
+            };
+
+            const clearConsole = () => {
+                consoleOutput.innerHTML = '';
+                logToConsole('Console cleared.', 'debug');
+            };
+
+            const copyConsole = () => {
+                navigator.clipboard.writeText(consoleOutput.innerText).then(() => {
+                     const originalIcon = copyConsoleButton.innerHTML;
+                     showFeedback(copyConsoleButton, originalIcon, true);
+                });
+            };
+
+            const downloadConsole = () => {
+                const blob = new Blob([consoleOutput.innerText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sandbox-console-log-${new Date().toISOString()}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+
+            // Listen for messages from the iframe
+            window.addEventListener('message', (event) => {
+                if (event.source !== sandboxIframe.contentWindow) return;
+                const { type, level, data, key } = event.data;
+                if (type === 'console') {
+                    logToConsole(data, level);
+                } else if (type === 'getApiKey') {
+                    const apiKey = localStorage.getItem('googleApiClientId');
+                    sandboxIframe.contentWindow.postMessage({ type: 'apiKeyResponse', key: apiKey }, '*');
+                } else if (type === 'setApiKey') {
+                    if (key) {
+                        localStorage.setItem('googleApiClientId', key);
+                        logToConsole('API Key saved successfully.', 'info');
+                    }
+                }
+            });
+
+            const loggerScript = `
+        <script>
+            const originalConsole = { log: console.log.bind(console), error: console.error.bind(console), warn: console.warn.bind(console), info: console.info.bind(console), debug: console.debug.bind(console) };
+            const formatArg = (arg) => {
+                if (arg instanceof Error) return \`Error: \${arg.message}\\n\${arg.stack}\`;
+                if (typeof arg === 'object' && arg !== null) { try { return JSON.stringify(arg, null, 2); } catch (e) { return String(arg); } }
+                return String(arg);
+            };
+            const sendLog = (level, args) => {
+                try {
+                    const message = [...args].map(formatArg).join(' ');
+                    window.parent.postMessage({ type: 'console', level, data: message }, '*');
+                } catch (e) { originalConsole.error('Sandbox log failed:', e); }
+            };
+            console.log = (...args) => { sendLog('log', args); originalConsole.log(...args); };
+            console.error = (...args) => { sendLog('error', args); originalConsole.error(...args); };
+            console.warn = (...args) => { sendLog('warn', args); originalConsole.warn(...args); };
+            console.info = (...args) => { sendLog('info', args); originalConsole.info(...args); };
+            console.debug = (...args) => { sendLog('debug', args); originalConsole.debug(...args); };
+            window.onerror = (msg, url, line, col, err) => { sendLog('error', [msg, 'at line', line, 'col', col]); originalConsole.error(err); return false; };
+            window.addEventListener('unhandledrejection', e => { sendLog('error', ['Unhandled Promise Rejection:', e.reason]); originalConsole.error(e.reason); });
+        <\/script>`;
+
+            const injectLogger = (html) => {
+                return html.replace('</head>', `${loggerScript}</head>`);
+            };
+
+            // --- CORE APP LOGIC ---
+            const runCode = () => {
+                const code = codeEditor.value;
+                if (!code.trim()) return;
+
+                clearConsole();
+                const codeWithLogger = injectLogger(code);
+                const blob = new Blob([codeWithLogger], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                sandboxIframe.src = url;
+
+                runView.style.display = 'block';
+                runView.classList.remove('inactive');
+                runView.classList.add('active');
+
+                editorButtons.classList.add('hidden');
+                closeButton.classList.remove('hidden');
+            };
+
+            const closeRunner = () => {
+                runView.classList.remove('active');
+                runView.classList.add('inactive');
+                
+                const onAnimationEnd = () => {
+                    runView.style.display = 'none';
+                    if (sandboxIframe.src) {
+                        URL.revokeObjectURL(sandboxIframe.src);
+                    }
+                    sandboxIframe.src = 'about:blank';
+                    runView.removeEventListener('animationend', onAnimationEnd);
+                };
+                runView.addEventListener('animationend', onAnimationEnd);
+
+                closeButton.classList.add('hidden');
+                editorButtons.classList.remove('hidden');
+            };
+
+            const showFeedback = (button, originalIcon, isSmall = false) => {
+                const sizeClass = isSmall ? 'w-4 h-4' : 'w-5 h-5';
+                const checkIcon = `<svg class="${sizeClass} text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+                button.innerHTML = checkIcon;
+                setTimeout(() => {
+                    button.innerHTML = originalIcon;
+                }, 1500);
+            };
+
+            // --- EVENT LISTENERS ---
+            goButton.addEventListener('click', runCode);
+            closeButton.addEventListener('click', closeRunner);
+            clearConsoleButton.addEventListener('click', clearConsole);
+            copyConsoleButton.addEventListener('click', copyConsole);
+            downloadConsoleButton.addEventListener('click', downloadConsole);
+
+            pasteButton.addEventListener('click', async () => {
+                const originalIcon = pasteButton.innerHTML;
+                try {
+                    const text = await navigator.clipboard.readText();
+                    if (text) {
+                        codeEditor.value = text;
+                        goButton.disabled = false;
+                        showFeedback(pasteButton, originalIcon);
+                        runCode(); // Auto-run on paste
+                    }
+                } catch (err) {
+                    logToConsole('Paste failed. Check clipboard permissions.', 'error');
+                    console.error('Paste failed:', err);
+                }
+            });
+
+            uploadButton.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files?.[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        codeEditor.value = e.target?.result;
+                        goButton.disabled = false;
+                        runCode(); // Auto-run on upload
+                    };
+                    reader.readAsText(file);
+                }
+                fileInput.value = '';
+            });
+
+            copyButton.addEventListener('click', () => {
+                const originalIcon = copyButton.innerHTML;
+                navigator.clipboard.writeText(codeEditor.value).then(() => {
+                    showFeedback(copyButton, originalIcon);
+                }).catch(err => {
+                    logToConsole('Failed to copy code.', 'error');
+                    console.error('Copy failed:', err);
+                });
+            });
+
+            deleteButton.addEventListener('click', () => {
+                codeEditor.value = '';
+                goButton.disabled = true;
+            });
+
+            codeEditor.addEventListener('input', () => {
+                goButton.disabled = !codeEditor.value.trim();
+            });
+
+            // --- RESIZER LOGIC ---
+            const onMouseDown = (e) => {
+                e.preventDefault();
+                document.body.style.userSelect = 'none'; // Prevent text selection during resize
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            };
+
+            const onMouseMove = (e) => {
+                const mainContainerHeight = editorContainer.parentElement.offsetHeight;
+                const newEditorHeight = e.clientY - editorContainer.getBoundingClientRect().top;
+
+                // Constraints
+                if (newEditorHeight > 50 && mainContainerHeight - newEditorHeight > 50) {
+                    editorContainer.style.height = `${newEditorHeight}px`;
+                }
+            };
+
+            const onMouseUp = () => {
+                document.body.style.userSelect = '';
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            };
+
+            resizer.addEventListener('mousedown', onMouseDown);
+
+            // --- INITIAL STATE ---
+            goButton.disabled = !codeEditor.value.trim();
+            logToConsole('Sandbox initialized. Ready to run code.', 'info');
+        });
     </script>
-    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 </body>
 </html>

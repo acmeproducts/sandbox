@@ -117,7 +117,7 @@
 
     <!-- Main Content Area -->
     <main class="flex-grow relative overflow-hidden">
-        <div id="main-container">
+        <div id="main-container" class="h-full">
             <!-- Editor View -->
             <div id="editor-container" class="h-3/5 p-2 sm:p-4">
                 <textarea id="code-editor" class="w-full h-full bg-gray-900 border-2 border-gray-700 rounded-md p-4 font-mono text-base text-green-300 resize-none focus:outline-none focus:border-blue-500 transition-colors" spellcheck="false"></textarea>
@@ -298,6 +298,7 @@
         }
         
         function loadScripts() {
+            // Remove any old scripts to prevent conflicts on re-initialization
             document.querySelectorAll('script[src^="https://apis.google.com"], script[src^="https://accounts.google.com"]').forEach(s => s.remove());
 
             const gapiScript = document.createElement('script');
@@ -477,7 +478,7 @@
             console.warn = (...args) => { sendLog('warn', args); originalConsole.warn(...args); };
             console.info = (...args) => { sendLog('info', args); originalConsole.info(...args); };
             console.debug = (...args) => { sendLog('debug', args); originalConsole.debug(...args); };
-            window.onerror = (msg, url, line, col, err) => { sendLog('error', [msg, 'at line', line, 'col', col]); originalConsole.error(err); return false; };
+            window.onerror = (msg, url, line, col, err) => { sendLog('error', [String(msg), 'at line', line, 'col', col].join(' ')); originalConsole.error(err); return false; };
             window.addEventListener('unhandledrejection', e => { sendLog('error', ['Unhandled Promise Rejection:', e.reason]); originalConsole.error(e.reason); });
         <\/script>`;
 
@@ -510,7 +511,7 @@
                 
                 const onAnimationEnd = () => {
                     runView.style.display = 'none';
-                    if (sandboxIframe.src) {
+                    if (sandboxIframe.src && sandboxIframe.src.startsWith('blob:')) {
                         URL.revokeObjectURL(sandboxIframe.src);
                     }
                     sandboxIframe.src = 'about:blank';

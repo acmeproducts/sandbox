@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Drive File Lister</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #api-key-modal { transition: opacity 0.3s ease; }
+        .modal-content { transform: translateY(-20px); transition: transform 0.3s ease; }
+        #api-key-modal.visible { opacity: 1; pointer-events: auto; }
+        #api-key-modal.visible .modal-content { transform: translateY(0); }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans p-8">
+
+    <!-- API Key Modal -->
+    <div id="api-key-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none">
+        <div class="modal-content bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h2 class="text-xl font-bold mb-4">Google API Client ID Required</h2>
+            <p class="text-gray-600 mb-4">Please provide your Google Cloud Client ID to use this application. You can get one from the <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="text-blue-500 hover:underline">Google Cloud Console</a>.</p>
+            <input type="text" id="api-key-input" placeholder="Enter your Client ID here" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="mt-4 flex justify-end">
+                <button id="save-api-key-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">Save and Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-gray-700">Google Drive File Lister</h1>
+            <p class="text-gray-500 mt-2">Sign in to view the first 15 files from your Google Drive root folder.</p>
+        </header>
+
+        <div id="auth-container" class="mb-6 flex justify-center items-center space-x-4">
+            <button id="authorize_button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition-transform transform hover:scale-105" style="visibility: hidden;">Sign In with Google</button>
+            <button id="signout_button" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition-transform transform hover:scale-105" style="display: none;">Sign Out</button>
+            <button id="change-api-key-button" title="Change API Key" class="p-2 bg-gray-500 hover:bg-gray-600 text-white rounded">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
+        </div>
+
+        <main id="content" class="bg-white p-6 rounded-lg shadow-md" style="display: none;">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2">Your Files</h2>
+            <div id="file-list-container"></div>
+            <p id="loading-state" class="text-gray-500 text-center py-4">Loading files...</p>
+        </main>
+    </div>
+
+    <script type="text/javascript">
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
+        
+        let CLIENT_ID = '';
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+
+        const authButton = document.getElementById('authorize_button');
+        const signoutButton = document.getElementById('signout_button');
+        const contentDiv = document.getElementById('content');
+        const fileListContainer = document.getElementById('file-list-container');
+        const loadingState = document.getElementById('loading-state');
+        const apiKeyModal = document.getElementById('api-key-modal');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const saveApiKeyButton = document.getElementById('save-api-key-button');
+        const changeApiKeyButton = document.getElementById('change-api-key-button');
+
+        // --- API Key Communication with Parent Window ---
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'apiKeyResponse') {
+                const apiKey = event.data.key;
+                if (apiKey) {
+                    CLIENT_ID = apiKey;
+                    apiKeyInput.value = apiKey;
+                    initializeApis();
+                } else {
+                    showApiKeyModal();
+                }
+            }
+        });
+
+        function showApiKeyModal() {
+            apiKeyModal.style.display = 'flex';
+            setTimeout(() => apiKeyModal.classList.add('visible'), 10);
+        }
+
+        function hideApiKeyModal() {
+            apiKeyModal.classList.remove('visible');
+            setTimeout(() => { apiKeyModal.style.display = 'none'; }, 300);
+        }
+
+        function saveApiKey() {
+            const newApiKey = apiKeyInput.value.trim();
+            if (newApiKey) {
+                window.parent.postMessage({ type: 'setApiKey', key: newApiKey }, '*');
+                CLIENT_ID = newApiKey;
+                hideApiKeyModal();
+                initializeApis();
+            } else {
+                alert('Please enter a valid Client ID.');
+            }
+        }
+        
+        // --- Google API Initialization ---
+        function gapiLoaded() {
+            gapi.load('client', initializeGapiClient);
+        }
+
+        async function initializeGapiClient() {
+            await gapi.client.init({ discoveryDocs: [DISCOVERY_DOC] });
+            gapiInited = true;
+            maybeEnableButtons();
+        }
+
+        function gisLoaded() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: '', // defined later
+            });
+            gisInited = true;
+            maybeEnableButtons();
+        }
+        
+        function loadScripts() {
+            // Remove any old scripts to prevent conflicts on re-initialization
+            document.querySelectorAll('script[src^="https://apis.google.com"], script[src^="https://accounts.google.com"]').forEach(s => s.remove());
+
+            const gapiScript = document.createElement('script');
+            gapiScript.src = 'https://apis.google.com/js/api.js';
+            gapiScript.async = true;
+            gapiScript.defer = true;
+            gapiScript.onload = gapiLoaded;
+            document.body.appendChild(gapiScript);
+
+            const gisScript = document.createElement('script');
+            gisScript.src = 'https://accounts.google.com/gsi/client';
+            gisScript.async = true;
+            gisScript.defer = true;
+            gisScript.onload = gisLoaded;
+            document.body.appendChild(gisScript);
+        }
+        
+        function initializeApis() {
+            if (CLIENT_ID) {
+                gapiInited = false;
+                gisInited = false;
+                loadScripts();
+            }
+        }
+
+        function maybeEnableButtons() {
+            if (gapiInited && gisInited) {
+                authButton.style.visibility = 'visible';
+            }
+        }
+        
+        // --- Auth & API Logic ---
+        function handleAuthClick() {
+            tokenClient.callback = async (resp) => {
+                if (resp.error !== undefined) { throw (resp); }
+                signoutButton.style.display = 'inline-block';
+                authButton.textContent = 'Refresh Token';
+                await listFiles();
+            };
+
+            if (gapi.client.getToken() === null) {
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            } else {
+                tokenClient.requestAccessToken({prompt: ''});
+            }
+        }
+
+        function handleSignoutClick() {
+            const token = gapi.client.getToken();
+            if (token !== null) {
+                google.accounts.oauth2.revoke(token.access_token);
+                gapi.client.setToken('');
+                contentDiv.style.display = 'none';
+                authButton.textContent = 'Sign In with Google';
+                signoutButton.style.display = 'none';
+                fileListContainer.innerHTML = '';
+            }
+        }
+
+        async function listFiles() {
+            contentDiv.style.display = 'block';
+            fileListContainer.innerHTML = '';
+            loadingState.style.display = 'block';
+            loadingState.textContent = 'Loading files...';
+            
+            try {
+                const response = await gapi.client.drive.files.list({
+                    'pageSize': 15,
+                    'fields': 'nextPageToken, files(id, name, mimeType, webViewLink, iconLink)'
+                });
+                
+                loadingState.style.display = 'none';
+                const files = response.result.files;
+                if (files && files.length > 0) {
+                    const ul = document.createElement('ul');
+                    ul.className = 'space-y-3';
+                    files.forEach((file) => {
+                        const li = document.createElement('li');
+                        li.className = 'flex items-center p-2 rounded-md hover:bg-gray-50';
+                        li.innerHTML = `
+                            <img src="${file.iconLink}" class="w-6 h-6 mr-3" alt="file icon">
+                            <a href="${file.webViewLink}" target="_blank" class="text-blue-600 hover:underline flex-grow">${file.name}</a>
+                        `;
+                        ul.appendChild(li);
+                    });
+                    fileListContainer.appendChild(ul);
+                } else {
+                    fileListContainer.innerHTML = '<p class="text-gray-500">No files found.</p>';
+                }
+            } catch (err) {
+                console.error('API Error:', err);
+                loadingState.textContent = `Error: ${err.result?.error?.message || err.message}. See console for details.`;
+            }
+        }
+
+        // --- INITIALIZATION & EVENT LISTENERS ---
+        saveApiKeyButton.addEventListener('click', saveApiKey);
+        changeApiKeyButton.addEventListener('click', showApiKeyModal);
+        authButton.addEventListener('click', handleAuthClick);
+        signoutButton.addEventListener('click', handleSignoutClick);
+        
+        // On load, ask the parent sandbox for the API key.
+        window.parent.postMessage({ type: 'getApiKey' }, '*');
+    </script>
+</body>
+</html>

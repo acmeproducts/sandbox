@@ -1,0 +1,5 @@
+{
+  "name": "HTML5 Sandbox v2",
+  "description": "Allow hosting and console access to test and feed back errors to ai. Copy console to clipboard, clear console, download console into txt",
+  "requestFramePermissions": []
+}

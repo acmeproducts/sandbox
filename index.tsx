@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <h1>Google Drive File Lister</h1>
         <button id="auth-button" class="btn">Connect to Google Drive</button>
         <button id="logout-button" class="btn hidden" style="background-color: #c53030; margin-top: 1rem;">Disconnect</button>
+        <button id="change-secret-btn" class="btn" style="background-color: #718096; margin-top: 1rem;">Change Client Secret</button>
         <div id="auth-status" class="status info">Please connect to your Google Drive account.</div>
     </div>
 
@@ -180,7 +181,7 @@ class GoogleDriveProvider {
                 redirect_uri: this.redirectUri
             })
         });
-        if (!response.ok) throw new Error('Token exchange failed.');
+        if (!response.ok) throw new Error('Token exchange failed. Check if your Client Secret is correct.');
         const tokens = await response.json();
         this.accessToken = tokens.access_token;
         if (tokens.refresh_token) {
@@ -221,8 +222,13 @@ class GoogleDriveProvider {
         
         let response = await performFetch();
         if (response.status === 401) {
-            await this.refreshAccessToken();
-            response = await performFetch();
+            try {
+                await this.refreshAccessToken();
+                response = await performFetch();
+            } catch (refreshError) {
+                 this.handleLogout(); // Force logout on refresh failure
+                 throw refreshError;
+            }
         }
         
         if (!response.ok) {
@@ -257,6 +263,7 @@ const ui = {
         auth: document.getElementById('auth-button'),
         logout: document.getElementById('logout-button'),
         backToFolders: document.getElementById('back-to-folders-btn'),
+        changeSecret: document.getElementById('change-secret-btn'),
     },
     inputs: {
         clientSecret: document.getElementById('client-secret'),
@@ -331,6 +338,7 @@ const app = {
         ui.buttons.auth.addEventListener('click', () => this.handleAuth());
         ui.buttons.logout.addEventListener('click', () => this.handleLogout());
         ui.buttons.backToFolders.addEventListener('click', () => this.showFolders());
+        ui.buttons.changeSecret.addEventListener('click', () => this.handleChangeSecret());
         
         this.checkInitialState();
     },
@@ -380,6 +388,13 @@ const app = {
         ui.showScreen('auth');
     },
 
+    handleChangeSecret() {
+        localStorage.removeItem('google_client_secret');
+        this.provider.clientSecret = null;
+        this.handleLogout(); // Also clear tokens
+        this.checkInitialState(); // Go back to secret screen
+    },
+
     updateAuthStatus() {
         if (this.provider.isAuthenticated) {
             ui.buttons.auth.classList.add('hidden');
@@ -424,12 +439,8 @@ const app = {
     }
 };
 
-// Initialize the app when the DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    if (!window.opener) {
-        app.init();
-    }
-});
+// Initialize the app
+app.init();
 </script>
 </body>
 </html>

@@ -18,415 +18,54 @@
         #console-output::-webkit-scrollbar { width: 8px; }
         #console-output::-webkit-scrollbar-track { background: #1f2937; }
         #console-output::-webkit-scrollbar-thumb { background-color: #4b5563; border-radius: 4px; }
-        .log-error { color: #f87171; } .log-warn { color: #fbbf24; } .log-info { color: #60a5fa; } .log-debug { color: #9ca3af; }
+        .log-error { color: #f87171; } .log-warn { color: #fbbf24; } .log-info { color: #60a5fa; } .log-debug { color: #9ca3af; } .log-log { color: #e5e7eb; }
     </style>
 </head>
 <body class="bg-gray-900 text-white font-sans h-screen w-screen overflow-hidden flex flex-col">
 
     <header class="bg-gray-800 p-2 sm:p-3 shadow-lg flex items-center justify-between z-30 flex-shrink-0">
         <h1 class="text-lg sm:text-xl font-bold text-gray-300">HTML5 Sandbox</h1>
-        <div id="controls-container" class="flex items-center space-x-2">
-            <!-- Auth & Settings Controls -->
-            <div id="auth-controls" class="flex items-center space-x-2 mr-4">
-                 <button id="authorize_button" class="px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>Sign In</button>
-                 <button id="signout_button" class="px-3 py-2 text-sm bg-red-600 hover:bg-red-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-red-500 transition-colors" style="display: none;">Sign Out</button>
-                 <button id="settings-button" title="Settings" class="p-2 bg-gray-600 hover:bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-gray-500 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                </button>
-            </div>
-            <!-- Editor Buttons -->
-            <div id="editor-buttons" class="flex items-center space-x-2">
-                <button id="paste-button" title="Paste & Run" class="p-2 bg-teal-600 hover:bg-teal-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-teal-500 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5V3a2 2 0 012-2h2a2 2 0 012 2v2"></path></svg>
-                </button>
-                <button id="run-button" class="px-4 py-2 text-sm font-bold bg-green-600 hover:bg-green-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-green-500 transition-colors">Run</button>
-            </div>
+        <div id="controls-container" class="flex items-center space-x-3">
+            <button id="paste-run-button" title="Paste & Run" class="w-10 h-10 flex items-center justify-center bg-blue-600 hover:bg-blue-700 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors" aria-label="Paste and Run code from clipboard">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
+            </button>
+            <input type="file" id="file-upload-input" class="hidden" accept=".html,.txt,.js">
+            <button id="upload-run-button" title="Upload & Run" class="w-10 h-10 flex items-center justify-center bg-blue-600 hover:bg-blue-700 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors" aria-label="Upload and Run code from file">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+            </button>
+            <button id="go-button" title="Go" class="w-10 h-10 flex items-center justify-center bg-blue-600 hover:bg-blue-700 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors" aria-label="Run code in editor">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+            </button>
+            <button id="copy-button" title="Copy Code" class="w-10 h-10 flex items-center justify-center bg-gray-600 hover:bg-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-gray-500 transition-colors" aria-label="Copy code to clipboard">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            </button>
+            <button id="download-button" title="Download Code" class="w-10 h-10 flex items-center justify-center bg-gray-600 hover:bg-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-gray-500 transition-colors" aria-label="Download code as file">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            </button>
+            <button id="clear-button" title="Clear Code" class="w-10 h-10 flex items-center justify-center bg-red-600 hover:bg-red-700 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-red-500 transition-colors" aria-label="Clear code editor">
+                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
         </div>
     </header>
 
     <main id="main-container" class="flex-grow flex flex-col">
         <div id="editor-container" class="relative bg-gray-800" style="height: 60%;">
-            <textarea id="editor" class="w-full h-full bg-gray-900 text-gray-300 p-4 font-mono text-sm resize-none focus:outline-none" spellcheck="false"></textarea>
+            <textarea id="editor" class="w-full h-full bg-gray-900 text-gray-300 p-4 font-mono text-sm resize-none focus:outline-none" spellcheck="false" aria-label="Code Editor"></textarea>
         </div>
-        <div id="resizer"></div>
+        <div id="resizer" role="separator" aria-orientation="horizontal" aria-label="Resize editor and console panels"></div>
         <div id="console-container" class="bg-gray-800 flex flex-col" style="height: 40%;">
             <div class="flex items-center justify-between bg-gray-700 p-2 text-sm border-b border-gray-600">
                 <span class="font-bold">Console</span>
                 <div class="flex items-center space-x-2">
-                    <button id="copy-console" title="Copy to Clipboard" class="p-1 hover:bg-gray-600 rounded-md"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
-                    <button id="clear-console" title="Clear Console" class="p-1 hover:bg-gray-600 rounded-md"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-                    <button id="download-console" title="Download Log" class="p-1 hover:bg-gray-600 rounded-md"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg></button>
+                    <button id="copy-console" title="Copy to Clipboard" class="p-1 hover:bg-gray-600 rounded-md" aria-label="Copy console output"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 S0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
+                    <button id="clear-console" title="Clear Console" class="p-1 hover:bg-gray-600 rounded-md" aria-label="Clear console output"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                    <button id="download-console" title="Download Log" class="p-1 hover:bg-gray-600 rounded-md" aria-label="Download console log"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg></button>
                 </div>
             </div>
-            <div id="console-output" class="flex-grow p-2 font-mono text-xs overflow-auto bg-gray-900"></div>
+            <div id="console-output" class="flex-grow p-2 font-mono text-xs overflow-auto bg-gray-900" role="log" aria-live="polite"></div>
         </div>
     </main>
-    <iframe id="sandbox" class="hidden" sandbox="allow-scripts allow-popups allow-forms"></iframe>
-
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
-        <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
-            <h2 class="text-xl font-bold mb-4">Settings</h2>
-            <div class="mb-4">
-                <label for="client-id-input" class="block text-sm font-medium text-gray-300 mb-1">Google Cloud Client ID</label>
-                <input type="text" id="client-id-input" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your Client ID">
-            </div>
-            <p class="text-xs text-gray-400 mb-4"><strong>Important:</strong> For this sandbox, use a Client ID where the "Authorized redirect URIs" section in Google Cloud Console is <strong>empty</strong>. This is required by the modern Google Sign-In library.</p>
-            <div class="flex justify-end space-x-2">
-                <button id="cancel-settings" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md">Cancel</button>
-                <button id="save-settings" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md">Save</button>
-            </div>
-        </div>
-    </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-
-    const defaultCode = `<!DOCTYPE html>
-<html>
-<head>
-    <title>Drive Files</title>
-    <script src="https://cdn.tailwindcss.com"><\/script>
-</head>
-<body class="bg-gray-800 text-gray-200 font-sans p-4">
-    <div id="content">
-        <h1 class="text-2xl font-bold mb-4">Google Drive Files</h1>
-        <p id="status" class="text-lg">Waiting for authentication token...</p>
-        <ul id="file-list" class="list-disc pl-5 mt-4"></ul>
-    </div>
-
-    <script type="text/javascript">
-        const statusEl = document.getElementById('status');
-        const fileListEl = document.getElementById('file-list');
-
-        // 1. Listen for the token from the parent window.
-        window.addEventListener('message', (event) => {
-            // Basic security check: ensure the message is from the parent
-            if (event.source !== window.parent) {
-                return;
-            }
-            if (event.data && event.data.type === 'ACCESS_TOKEN' && event.data.token) {
-                const accessToken = event.data.token;
-                statusEl.textContent = 'Token received. Fetching files...';
-                listFiles(accessToken);
-            }
-        }, false);
-
-        async function listFiles(token) {
-            try {
-                const response = await fetch('https://www.googleapis.com/drive/v3/files?pageSize=15&fields=nextPageToken,files(id,name,mimeType,webViewLink)', {
-                    headers: {
-                        'Authorization': \`Bearer \${token}\`
-                    }
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    const errorMessage = errorData.error?.message || \`HTTP error! Status: \${response.status}\`;
-                    throw new Error(errorMessage);
-                }
-
-                const data = await response.json();
-                const files = data.files;
-
-                if (files && files.length > 0) {
-                    statusEl.style.display = 'none';
-                    fileListEl.innerHTML = ''; // Clear previous list
-                    files.forEach(file => {
-                        const li = document.createElement('li');
-                        const link = document.createElement('a');
-                        link.href = file.webViewLink;
-                        link.target = '_blank';
-                        link.textContent = \`\${file.name} (\${file.mimeType})\`;
-                        link.className = 'text-blue-400 hover:underline';
-                        li.appendChild(link);
-                        fileListEl.appendChild(li);
-                    });
-                } else {
-                    statusEl.textContent = 'No files found.';
-                    statusEl.style.display = 'block';
-                }
-            } catch (err) {
-                console.error("Error fetching files:", err);
-                statusEl.textContent = \`Error fetching files: \${err.message}. Check the console. Is the Drive API enabled in your Google Cloud project?\`;
-                statusEl.style.display = 'block';
-            }
-        }
-        
-        // 2. Signal to the parent that this iframe is ready to receive a token.
-        window.parent.postMessage({ type: 'IFRAME_READY' }, '*');
-    <\/script>
-</body>
-</html>
-`;
-
-    // DOM Elements
-    const editor = document.getElementById('editor');
-    const sandbox = document.getElementById('sandbox');
-    const runButton = document.getElementById('run-button');
-    const pasteButton = document.getElementById('paste-button');
-    const consoleOutput = document.getElementById('console-output');
-    const clearConsoleBtn = document.getElementById('clear-console');
-    const copyConsoleBtn = document.getElementById('copy-console');
-    const downloadConsoleBtn = document.getElementById('download-console');
-    const resizer = document.getElementById('resizer');
-    const mainContainer = document.getElementById('main-container');
-    const editorContainer = document.getElementById('editor-container');
-    const consoleContainer = document.getElementById('console-container');
-
-    // Auth Elements
-    const authorizeButton = document.getElementById('authorize_button');
-    const signoutButton = document.getElementById('signout_button');
-    const settingsButton = document.getElementById('settings-button');
-    const settingsModal = document.getElementById('settings-modal');
-    const clientIdInput = document.getElementById('client-id-input');
-    const saveSettingsButton = document.getElementById('save-settings');
-    const cancelSettingsButton = document.getElementById('cancel-settings');
-
-    editor.value = defaultCode;
-    let clientId = localStorage.getItem('googleClientId');
-    let tokenClient;
-    let accessToken = null;
-    let postTokenAction = null; // Action to run after getting a token
-
-    // --- Settings Modal Logic ---
-    const showSettingsModal = () => {
-        clientIdInput.value = localStorage.getItem('googleClientId') || '';
-        settingsModal.classList.remove('hidden');
-    };
-    const hideSettingsModal = () => settingsModal.classList.add('hidden');
-
-    settingsButton.addEventListener('click', showSettingsModal);
-    cancelSettingsButton.addEventListener('click', hideSettingsModal);
-    saveSettingsButton.addEventListener('click', () => {
-        const newClientId = clientIdInput.value.trim();
-        if (newClientId) {
-            localStorage.setItem('googleClientId', newClientId);
-            clientId = newClientId;
-            hideSettingsModal();
-            updateAuthUI(false); // Force sign-out state
-            initializeGisClient();
-            logToConsole('Client ID saved. Please sign in again.', 'info');
-        } else {
-            alert('Please enter a valid Client ID.');
-        }
-    });
-
-    // --- Google Auth Logic ---
-    const updateAuthUI = (isSignedIn) => {
-        if (isSignedIn) {
-            authorizeButton.style.display = 'none';
-            signoutButton.style.display = 'block';
-        } else {
-            accessToken = null;
-            authorizeButton.style.display = 'block';
-            signoutButton.style.display = 'none';
-        }
-    };
-    
-    const handleTokenResponse = (tokenResponse) => {
-        if (tokenResponse.error) {
-            console.error('Google Auth Error:', tokenResponse);
-            let detailedError = tokenResponse.error_description || tokenResponse.error;
-            if (tokenResponse.error === 'invalid_request' || tokenResponse.error === 'redirect_uri_mismatch' || tokenResponse.error_subtype === 'access_denied') {
-                detailedError += ' - This often means your Client ID has "Authorized redirect URIs" configured. Please use a Client ID with that section left empty in Google Cloud Console.';
-            }
-            logToConsole(`Google Auth Error: ${detailedError}`, 'error');
-            updateAuthUI(false);
-            if (postTokenAction) {
-                postTokenAction(null, tokenResponse.error); // Signal failure
-                postTokenAction = null;
-            }
-            return;
-        }
-        accessToken = tokenResponse.access_token;
-        updateAuthUI(true);
-        if (!postTokenAction) { // Prevents double logging on run
-            logToConsole('Successfully signed in.', 'info');
-        }
-        
-        if (postTokenAction) {
-            postTokenAction(accessToken, null); // Signal success
-            postTokenAction = null;
-        }
-    };
-
-    function initializeGisClient() {
-        if (!clientId) {
-            authorizeButton.disabled = true;
-            logToConsole('Google Client ID not set. Please configure it in Settings.', 'warn');
-            return;
-        }
-        
-        try {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: clientId,
-                scope: 'https://www.googleapis.com/auth/drive.readonly',
-                callback: handleTokenResponse,
-            });
-            authorizeButton.disabled = false;
-        } catch (err) {
-            console.error('Failed to initialize Google Auth:', err);
-            logToConsole('Failed to initialize Google Auth. Is your Client ID valid?', 'error');
-        }
-    }
-
-    // Load Google Identity Services script
-    const gsiScript = document.createElement('script');
-    gsiScript.src = 'https://accounts.google.com/gsi/client';
-    gsiScript.async = true;
-    gsiScript.defer = true;
-    gsiScript.onload = () => {
-        if (!clientId) {
-            showSettingsModal();
-        } else {
-            initializeGisClient();
-        }
-    };
-    document.head.appendChild(gsiScript);
-
-    authorizeButton.addEventListener('click', () => {
-        if (tokenClient) {
-            tokenClient.requestAccessToken({ prompt: 'consent' });
-        } else {
-            logToConsole('Google auth client not initialized. Check your Client ID in settings.', 'error');
-        }
-    });
-
-    signoutButton.addEventListener('click', () => {
-        if (accessToken) {
-            google.accounts.oauth2.revoke(accessToken, () => {
-                updateAuthUI(false);
-                logToConsole('Signed out.', 'info');
-            });
-        }
-    });
-
-    // --- Sandbox Execution & Communication ---
-    const createSandbox = (code) => {
-        const blob = new Blob([code], { type: 'text/html' });
-        if (sandbox.src) {
-            URL.revokeObjectURL(sandbox.src);
-        }
-        sandbox.src = URL.createObjectURL(blob);
-    };
-    
-    runButton.addEventListener('click', () => {
-        const code = editor.value;
-        const needsAuth = code.includes('ACCESS_TOKEN');
-
-        if (needsAuth && !accessToken) {
-            logToConsole('Cannot run Drive API example: User is not signed in.', 'warn');
-            // We can still create the sandbox; its internal logic will just show a "waiting" message.
-            createSandbox(code); 
-            return;
-        }
-        
-        if (needsAuth && accessToken) {
-            logToConsole('Refreshing token before execution...', 'info');
-            postTokenAction = (freshToken, err) => {
-                if (err || !freshToken) {
-                    logToConsole(`Could not refresh token: ${err || 'Unknown error'}. Execution aborted.`, 'error');
-                    return;
-                }
-                logToConsole('Token refreshed. Executing code in sandbox.', 'info');
-                createSandbox(code);
-            };
-            // This is a silent refresh, it will call handleTokenResponse with a new token
-            tokenClient.requestAccessToken({ prompt: '' }); 
-        } else {
-            // Code does not require auth, so run it immediately
-            createSandbox(code);
-        }
-    });
-
-    window.addEventListener('message', (event) => {
-        if (event.source === sandbox.contentWindow && event.data.type === 'IFRAME_READY') {
-            if (accessToken) {
-                sandbox.contentWindow.postMessage({ type: 'ACCESS_TOKEN', token: accessToken }, '*');
-            } else if (editor.value.includes('ACCESS_TOKEN')) {
-                logToConsole('Cannot provide token to sandbox: User is not signed in.', 'warn');
-            }
-        }
-    });
-
-    pasteButton.addEventListener('click', async () => {
-        try {
-            const text = await navigator.clipboard.readText();
-            editor.value = text;
-            runButton.click();
-        } catch (err) {
-            console.error('Failed to read clipboard contents: ', err);
-            logToConsole('Failed to read clipboard. Please grant permission.', 'error');
-        }
-    });
-
-
-    // --- Console Logic ---
-    const logToConsole = (message, level = 'info') => {
-        const logEntry = document.createElement('div');
-        const timestamp = new Date().toLocaleTimeString();
-        logEntry.innerHTML = `<span class="text-gray-500 mr-2">${timestamp}</span> <span class="log-${level}">${message}</span>`;
-        consoleOutput.appendChild(logEntry);
-        consoleOutput.scrollTop = consoleOutput.scrollHeight;
-    };
-
-    const originalConsole = { ...console };
-    console.log = (msg) => { logToConsole(String(msg), 'info'); originalConsole.log(msg); };
-    console.warn = (msg) => { logToConsole(String(msg), 'warn'); originalConsole.warn(msg); };
-    console.error = (msg) => { logToConsole(String(msg), 'error'); originalConsole.error(msg); };
-    console.debug = (msg) => { logToConsole(String(msg), 'debug'); originalConsole.debug(msg); };
-    
-    window.addEventListener('error', (event) => {
-        console.error(`Uncaught Error: ${event.message} at line ${event.lineno} col ${event.colno}`);
-    });
-    window.addEventListener('unhandledrejection', (event) => {
-        console.error(`Unhandled Promise Rejection: ${event.reason}`);
-    });
-
-
-    clearConsoleBtn.addEventListener('click', () => {
-        consoleOutput.innerHTML = '';
-        logToConsole('Console cleared.');
-    });
-    copyConsoleBtn.addEventListener('click', () => navigator.clipboard.writeText(consoleOutput.innerText));
-    downloadConsoleBtn.addEventListener('click', () => {
-        const blob = new Blob([consoleOutput.innerText], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'console-log.txt';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    });
-
-    // --- Resizer Logic ---
-    let isResizing = false;
-    resizer.addEventListener('mousedown', (e) => {
-        isResizing = true;
-        document.body.style.cursor = 'ns-resize';
-        document.body.style.userSelect = 'none';
-    });
-    document.addEventListener('mousemove', (e) => {
-        if (!isResizing) return;
-        const totalHeight = mainContainer.offsetHeight;
-        // The resizer is part of the mainContainer, so we use clientY relative to the viewport.
-        const newEditorHeight = e.clientY - mainContainer.getBoundingClientRect().top;
-        if (newEditorHeight > 50 && newEditorHeight < totalHeight - 50 - resizer.offsetHeight) {
-            const editorPercent = (newEditorHeight / totalHeight) * 100;
-            editorContainer.style.height = `${editorPercent}%`;
-            consoleContainer.style.height = `calc(${100 - editorPercent}% - 8px)`;
-        }
-    });
-    document.addEventListener('mouseup', () => {
-        isResizing = false;
-        document.body.style.cursor = 'default';
-        document.body.style.userSelect = 'auto';
-    });
-});
-</script>
-
+    <iframe id="sandbox" class="hidden" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" title="Code Sandbox Execution Frame"></iframe>
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>

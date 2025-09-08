@@ -71,7 +71,7 @@
                 <label for="client-id-input" class="block text-sm font-medium text-gray-300 mb-1">Google Cloud Client ID</label>
                 <input type="text" id="client-id-input" class="w-full bg-gray-900 border border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your Client ID">
             </div>
-            <p class="text-xs text-gray-400 mb-4">Required for Google API access. This is stored securely in your browser's local storage and is never sent anywhere else.</p>
+            <p class="text-xs text-gray-400 mb-4"><strong>Important:</strong> For this sandbox, use a Client ID where the "Authorized redirect URIs" section in Google Cloud Console is <strong>empty</strong>. This is required by the modern Google Sign-In library.</p>
             <div class="flex justify-end space-x-2">
                 <button id="cancel-settings" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md">Cancel</button>
                 <button id="save-settings" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md">Save</button>
@@ -184,6 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyConsoleBtn = document.getElementById('copy-console');
     const downloadConsoleBtn = document.getElementById('download-console');
     const resizer = document.getElementById('resizer');
+    const mainContainer = document.getElementById('main-container');
     const editorContainer = document.getElementById('editor-container');
     const consoleContainer = document.getElementById('console-container');
 
@@ -200,6 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let clientId = localStorage.getItem('googleClientId');
     let tokenClient;
     let accessToken = null;
+    let postTokenAction = null; // Action to run after getting a token
 
     // --- Settings Modal Logic ---
     const showSettingsModal = () => {
@@ -216,8 +218,9 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('googleClientId', newClientId);
             clientId = newClientId;
             hideSettingsModal();
-            initializeGisClient(); // Re-initialize with the new client ID
-            logToConsole('Client ID saved. Please sign in again if needed.', 'info');
+            updateAuthUI(false); // Force sign-out state
+            initializeGisClient();
+            logToConsole('Client ID saved. Please sign in again.', 'info');
         } else {
             alert('Please enter a valid Client ID.');
         }
@@ -235,6 +238,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
+    const handleTokenResponse = (tokenResponse) => {
+        if (tokenResponse.error) {
+            console.error('Google Auth Error:', tokenResponse);
+            let detailedError = tokenResponse.error_description || tokenResponse.error;
+            if (tokenResponse.error === 'invalid_request' || tokenResponse.error === 'redirect_uri_mismatch' || tokenResponse.error_subtype === 'access_denied') {
+                detailedError += ' - This often means your Client ID has "Authorized redirect URIs" configured. Please use a Client ID with that section left empty in Google Cloud Console.';
+            }
+            logToConsole(`Google Auth Error: ${detailedError}`, 'error');
+            updateAuthUI(false);
+            if (postTokenAction) {
+                postTokenAction(null, tokenResponse.error); // Signal failure
+                postTokenAction = null;
+            }
+            return;
+        }
+        accessToken = tokenResponse.access_token;
+        updateAuthUI(true);
+        if (!postTokenAction) { // Prevents double logging on run
+            logToConsole('Successfully signed in.', 'info');
+        }
+        
+        if (postTokenAction) {
+            postTokenAction(accessToken, null); // Signal success
+            postTokenAction = null;
+        }
+    };
+
     function initializeGisClient() {
         if (!clientId) {
             authorizeButton.disabled = true;
@@ -242,20 +272,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: clientId,
-            scope: 'https://www.googleapis.com/auth/drive.readonly',
-            callback: (tokenResponse) => {
-                if (tokenResponse.error) {
-                    console.error('Google Auth Error:', tokenResponse.error);
-                    logToConsole(`Google Auth Error: ${tokenResponse.error_description || tokenResponse.error}`, 'error');
-                    return;
-                }
-                accessToken = tokenResponse.access_token;
-                updateAuthUI(true);
-            },
-        });
-        authorizeButton.disabled = false;
+        try {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: clientId,
+                scope: 'https://www.googleapis.com/auth/drive.readonly',
+                callback: handleTokenResponse,
+            });
+            authorizeButton.disabled = false;
+        } catch (err) {
+            console.error('Failed to initialize Google Auth:', err);
+            logToConsole('Failed to initialize Google Auth. Is your Client ID valid?', 'error');
+        }
     }
 
     // Load Google Identity Services script
@@ -266,14 +293,17 @@ document.addEventListener('DOMContentLoaded', () => {
     gsiScript.onload = () => {
         if (!clientId) {
             showSettingsModal();
+        } else {
+            initializeGisClient();
         }
-        initializeGisClient();
     };
     document.head.appendChild(gsiScript);
 
     authorizeButton.addEventListener('click', () => {
         if (tokenClient) {
             tokenClient.requestAccessToken({ prompt: 'consent' });
+        } else {
+            logToConsole('Google auth client not initialized. Check your Client ID in settings.', 'error');
         }
     });
 
@@ -281,23 +311,53 @@ document.addEventListener('DOMContentLoaded', () => {
         if (accessToken) {
             google.accounts.oauth2.revoke(accessToken, () => {
                 updateAuthUI(false);
+                logToConsole('Signed out.', 'info');
             });
         }
     });
 
     // --- Sandbox Execution & Communication ---
+    const createSandbox = (code) => {
+        const blob = new Blob([code], { type: 'text/html' });
+        if (sandbox.src) {
+            URL.revokeObjectURL(sandbox.src);
+        }
+        sandbox.src = URL.createObjectURL(blob);
+    };
+    
     runButton.addEventListener('click', () => {
         const code = editor.value;
-        const blob = new Blob([code], { type: 'text/html' });
-        sandbox.src = URL.createObjectURL(blob);
+        const needsAuth = code.includes('ACCESS_TOKEN');
+
+        if (needsAuth && !accessToken) {
+            logToConsole('Cannot run Drive API example: User is not signed in.', 'warn');
+            createSandbox(code); // Run anyway, let the sandbox code handle the lack of token
+            return;
+        }
+        
+        if (needsAuth && accessToken) {
+            logToConsole('Refreshing token before execution...', 'info');
+            postTokenAction = (freshToken, err) => {
+                if (err) {
+                    logToConsole(`Could not refresh token: ${err}. Execution aborted.`, 'error');
+                    return;
+                }
+                logToConsole('Token refreshed. Executing code in sandbox.', 'info');
+                createSandbox(code);
+            };
+            tokenClient.requestAccessToken({ prompt: '' }); // This is a silent refresh
+        } else {
+            // Code does not require auth, so run it immediately
+            createSandbox(code);
+        }
     });
 
     window.addEventListener('message', (event) => {
         if (event.source === sandbox.contentWindow && event.data.type === 'IFRAME_READY') {
             if (accessToken) {
                 sandbox.contentWindow.postMessage({ type: 'ACCESS_TOKEN', token: accessToken }, '*');
-            } else {
-                logToConsole('Cannot run Drive API example: User is not signed in.', 'warn');
+            } else if (editor.value.includes('ACCESS_TOKEN')) {
+                logToConsole('Cannot provide token to sandbox: User is not signed in.', 'warn');
             }
         }
     });
@@ -315,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Console Logic ---
-    const logToConsole = (message, level = 'log') => {
+    const logToConsole = (message, level = 'info') => {
         const logEntry = document.createElement('div');
         const timestamp = new Date().toLocaleTimeString();
         logEntry.innerHTML = `<span class="text-gray-500 mr-2">${timestamp}</span> <span class="log-${level}">${message}</span>`;
@@ -324,10 +384,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const originalConsole = { ...console };
-    console.log = (msg) => { logToConsole(msg, 'info'); originalConsole.log(msg); };
-    console.warn = (msg) => { logToConsole(msg, 'warn'); originalConsole.warn(msg); };
-    console.error = (msg) => { logToConsole(msg, 'error'); originalConsole.error(msg); };
-    console.debug = (msg) => { logToConsole(msg, 'debug'); originalConsole.debug(msg); };
+    console.log = (msg) => { logToConsole(String(msg), 'info'); originalConsole.log(msg); };
+    console.warn = (msg) => { logToConsole(String(msg), 'warn'); originalConsole.warn(msg); };
+    console.error = (msg) => { logToConsole(String(msg), 'error'); originalConsole.error(msg); };
+    console.debug = (msg) => { logToConsole(String(msg), 'debug'); originalConsole.debug(msg); };
     
     window.addEventListener('error', (event) => {
         console.error(`Uncaught Error: ${event.message} at line ${event.lineno} col ${event.colno}`);
@@ -337,7 +397,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    clearConsoleBtn.addEventListener('click', () => consoleOutput.innerHTML = '');
+    clearConsoleBtn.addEventListener('click', () => {
+        consoleOutput.innerHTML = '';
+        logToConsole('Console cleared.');
+    });
     copyConsoleBtn.addEventListener('click', () => navigator.clipboard.writeText(consoleOutput.innerText));
     downloadConsoleBtn.addEventListener('click', () => {
         const blob = new Blob([consoleOutput.innerText], { type: 'text/plain' });
@@ -345,7 +408,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const a = document.createElement('a');
         a.href = url;
         a.download = 'console-log.txt';
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         URL.revokeObjectURL(url);
     });
 
@@ -358,8 +423,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.addEventListener('mousemove', (e) => {
         if (!isResizing) return;
-        const totalHeight = main-container.offsetHeight;
-        const newEditorHeight = e.clientY - main-container.offsetTop;
+        const totalHeight = mainContainer.offsetHeight;
+        const newEditorHeight = e.clientY - mainContainer.offsetTop;
         if (newEditorHeight > 50 && newEditorHeight < totalHeight - 50) {
             const editorPercent = (newEditorHeight / totalHeight) * 100;
             editorContainer.style.height = `${editorPercent}%`;

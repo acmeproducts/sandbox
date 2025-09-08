@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="container">
     <!-- Screen 1: Client Secret Input -->
     <div id="secret-screen" class="card">
-        <h1>Google Drive Setup</h1>
+        <h1>Gooyogle Drive Setup</h1>
         <p>To connect to Google Drive, you need to provide a Client Secret from your Google Cloud project's OAuth 2.0 Client ID.</p>
         <input type="password" id="client-secret" class="input" placeholder="Enter Google Client Secret">
         <button id="save-secret-btn" class="btn">Save & Continue</button>

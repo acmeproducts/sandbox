@@ -13,7 +13,7 @@
         #editor-container, #console-container { flex-shrink: 0; min-height: 50px; }
         #console-container { flex-grow: 1; }
         #resizer { cursor: ns-resize; height: 8px; background-color: #2d3748; transition: background-color 0.2s; flex-shrink: 0; }
-        #resizer:hover { background-color: #4299e1; }
+        #resizer:hover { background-color: #f97316; }
         #console-output { white-space: pre-wrap; word-break: break-all; }
         #console-output::-webkit-scrollbar { width: 8px; }
         #console-output::-webkit-scrollbar-track { background: #1f2937; }
@@ -26,14 +26,14 @@
     <header class="bg-gray-800 p-2 sm:p-3 shadow-lg flex items-center justify-between z-30 flex-shrink-0">
         <h1 class="text-lg sm:text-xl font-bold text-gray-300">HTML5 Sandbox</h1>
         <div id="controls-container" class="flex items-center space-x-3">
-            <button id="paste-run-button" title="Paste & Run" class="w-10 h-10 flex items-center justify-center bg-blue-600 hover:bg-blue-700 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors" aria-label="Paste and Run code from clipboard">
+            <button id="paste-run-button" title="Paste & Run" class="w-10 h-10 flex items-center justify-center bg-orange-600 hover:bg-orange-700 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-orange-500 transition-colors" aria-label="Paste and Run code from clipboard">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"></path></svg>
             </button>
             <input type="file" id="file-upload-input" class="hidden" accept=".html,.txt,.js">
-            <button id="upload-run-button" title="Upload & Run" class="w-10 h-10 flex items-center justify-center bg-blue-600 hover:bg-blue-700 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors" aria-label="Upload and Run code from file">
+            <button id="upload-run-button" title="Upload & Run" class="w-10 h-10 flex items-center justify-center bg-orange-600 hover:bg-orange-700 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-orange-500 transition-colors" aria-label="Upload and Run code from file">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
             </button>
-            <button id="go-button" title="Go" class="w-10 h-10 flex items-center justify-center bg-blue-600 hover:bg-blue-700 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors" aria-label="Run code in editor">
+            <button id="go-button" title="Go" class="w-10 h-10 flex items-center justify-center bg-orange-600 hover:bg-orange-700 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-orange-500 transition-colors" aria-label="Run code in editor">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
             </button>
             <button id="copy-button" title="Copy Code" class="w-10 h-10 flex items-center justify-center bg-gray-600 hover:bg-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-gray-500 transition-colors" aria-label="Copy code to clipboard">

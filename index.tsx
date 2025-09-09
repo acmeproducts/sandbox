@@ -30,19 +30,19 @@ document.addEventListener('DOMContentLoaded', () => {
         p { color: #a0aec0; margin-bottom: 1.5rem; }
         .input { width: 100%; padding: 0.75rem 1rem; border: 1px solid #4a5568; border-radius: 0.375rem; background-color: #1a202c; color: #e2e8f0; font-size: 1rem; margin-bottom: 1rem; }
         .input::placeholder { color: #718096; }
-        .btn { display: block; width: 100%; background-color: #4299e1; color: white; font-weight: bold; padding: 0.75rem 1rem; border: none; border-radius: 0.375rem; cursor: pointer; transition: background-color 0.2s; }
-        .btn:hover:not(:disabled) { background-color: #2b6cb0; }
+        .btn { display: block; width: 100%; background-color: #dd6b20; color: white; font-weight: bold; padding: 0.75rem 1rem; border: none; border-radius: 0.375rem; cursor: pointer; transition: background-color 0.2s; }
+        .btn:hover:not(:disabled) { background-color: #c05621; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .status { padding: 1rem; border-radius: 0.375rem; margin-top: 1.5rem; font-weight: 500; }
-        .status.info { background-color: rgba(66, 153, 225, 0.2); color: #63b3ed; border: 1px solid rgba(66, 153, 225, 0.3); }
+        .status.info { background-color: rgba(221, 107, 32, 0.2); color: #dd6b20; border: 1px solid rgba(221, 107, 32, 0.3); }
         .status.success { background-color: rgba(74, 222, 128, 0.2); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); }
         .status.error { background-color: rgba(248, 113, 113, 0.2); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.3); }
         .item-list { list-style: none; padding: 0; margin: 0; max-height: 40vh; overflow-y: auto; }
         .item { display: flex; align-items: center; padding: 0.75rem; margin-bottom: 0.5rem; background-color: #4a5568; border-radius: 0.375rem; cursor: pointer; transition: background-color 0.2s; }
         .item:hover { background-color: #718096; }
-        .item-icon { width: 1.25rem; height: 1.25rem; margin-right: 0.75rem; color: #90cdf4; }
+        .item-icon { width: 1.25rem; height: 1.25rem; margin-right: 0.75rem; color: #f6ad55; }
         .item-name { flex: 1; font-weight: 500; }
-        .spinner { margin: 2rem auto; width: 2.5rem; height: 2.5rem; border: 3px solid #4a5568; border-radius: 50%; border-top-color: #4299e1; animation: spin 1s linear infinite; }
+        .spinner { margin: 2rem auto; width: 2.5rem; height: 2.5rem; border: 3px solid #4a5568; border-radius: 50%; border-top-color: #dd6b20; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>

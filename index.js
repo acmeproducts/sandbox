@@ -1,4 +1,5 @@
 
+
 document.addEventListener('DOMContentLoaded', () => {
     const editor = document.getElementById('editor');
     const goButton = document.getElementById('go-button');
@@ -227,7 +228,6 @@ class GoogleDriveProvider {
                 await this.refreshAccessToken();
                 response = await performFetch();
             } catch (refreshError) {
-                 this.handleLogout(); // Force logout on refresh failure
                  throw refreshError;
             }
         }

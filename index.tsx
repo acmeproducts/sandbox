@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
     // FIX: Cast editor to HTMLTextAreaElement to access the 'value' property (fixes multiple errors).
     const editor = document.getElementById('editor') as HTMLTextAreaElement;
@@ -228,7 +229,6 @@ class GoogleDriveProvider {
                 await this.refreshAccessToken();
                 response = await performFetch();
             } catch (refreshError) {
-                 this.handleLogout(); // Force logout on refresh failure
                  throw refreshError;
             }
         }

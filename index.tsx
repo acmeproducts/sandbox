@@ -1,20 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // FIX: Cast editor to HTMLTextAreaElement to access the 'value' property (fixes multiple errors).
     const editor = document.getElementById('editor') as HTMLTextAreaElement;
-    const goButton = document.getElementById('go-button') as HTMLButtonElement;
+    const goButton = document.getElementById('go-button');
+    // FIX: Cast sandbox to HTMLIFrameElement to access the 'srcdoc' property.
     const sandbox = document.getElementById('sandbox') as HTMLIFrameElement;
-    const consoleOutput = document.getElementById('console-output') as HTMLDivElement;
-    const clearConsoleButton = document.getElementById('clear-console') as HTMLButtonElement;
-    const copyConsoleButton = document.getElementById('copy-console') as HTMLButtonElement;
-    const downloadConsoleButton = document.getElementById('download-console') as HTMLButtonElement;
-    const pasteRunButton = document.getElementById('paste-run-button') as HTMLButtonElement;
-    const uploadRunButton = document.getElementById('upload-run-button') as HTMLButtonElement;
-    const fileUploadInput = document.getElementById('file-upload-input') as HTMLInputElement;
-    const copyButton = document.getElementById('copy-button') as HTMLButtonElement;
-    const downloadButton = document.getElementById('download-button') as HTMLButtonElement;
-    const clearButton = document.getElementById('clear-button') as HTMLButtonElement;
-    const resizer = document.getElementById('resizer') as HTMLDivElement;
-    const editorContainer = document.getElementById('editor-container') as HTMLDivElement;
-    const consoleContainer = document.getElementById('console-container') as HTMLDivElement;
+    const consoleOutput = document.getElementById('console-output');
+    const clearConsoleButton = document.getElementById('clear-console');
+    const copyConsoleButton = document.getElementById('copy-console');
+    const downloadConsoleButton = document.getElementById('download-console');
+    const pasteRunButton = document.getElementById('paste-run-button');
+    const uploadRunButton = document.getElementById('upload-run-button');
+    const fileUploadInput = document.getElementById('file-upload-input');
+    const copyButton = document.getElementById('copy-button');
+    const downloadButton = document.getElementById('download-button');
+    const clearButton = document.getElementById('clear-button');
+    const resizer = document.getElementById('resizer');
+    const editorContainer = document.getElementById('editor-container');
+    const consoleContainer = document.getElementById('console-container');
 
     const defaultCode = `<!DOCTYPE html>
 <html lang="en">
@@ -266,7 +268,8 @@ const ui = {
         changeSecret: document.getElementById('change-secret-btn'),
     },
     inputs: {
-        clientSecret: document.getElementById('client-secret'),
+        // FIX: Cast clientSecret input to HTMLInputElement to access the 'value' property.
+        clientSecret: document.getElementById('client-secret') as HTMLInputElement,
     },
     status: {
         secret: document.getElementById('secret-status'),
@@ -450,7 +453,7 @@ app.init();
     editor.value = defaultCode;
 
     // --- Console Logic ---
-    function formatLogMessage(args: any[]): string {
+    function formatLogMessage(args) {
         return args.map(arg => {
             if (typeof arg === 'object' && arg !== null) {
                 try {
@@ -463,7 +466,7 @@ app.init();
         }).join(' ');
     }
 
-    function logToUI(type: 'log' | 'error' | 'warn' | 'info' | 'debug', ...args: any[]) {
+    function logToUI(type, ...args) {
         const message = formatLogMessage(args);
         const logEntry = document.createElement('div');
         logEntry.className = `log-${type} py-1 px-2 border-b border-gray-800`;
@@ -555,10 +558,12 @@ app.init();
     });
 
     fileUploadInput.addEventListener('change', (event) => {
+        // FIX: Cast event.target to HTMLInputElement to access the 'files' property.
         const file = (event.target as HTMLInputElement).files?.[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
+                // FIX: Cast FileReader result to string as we are using readAsText.
                 editor.value = e.target?.result as string;
                 runCode();
             };
@@ -600,9 +605,9 @@ app.init();
         });
     });
 
-    function handleMouseMove(e: MouseEvent) {
+    function handleMouseMove(e) {
         if (!isResizing) return;
-        const mainContainer = document.getElementById('main-container') as HTMLElement;
+        const mainContainer = document.getElementById('main-container');
         const totalHeight = mainContainer.offsetHeight;
         const newEditorHeight = e.clientY - editorContainer.offsetTop;
         

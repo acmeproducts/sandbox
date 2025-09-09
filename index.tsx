@@ -532,7 +532,7 @@ app.init();
                     };
                 })();
             <\/script>
-            \${code}
+            ${code}
         `;
         sandbox.srcdoc = instrumentedCode;
     }
@@ -609,8 +609,8 @@ app.init();
         // Constrain resizing
         if (newEditorHeight > 50 && totalHeight - newEditorHeight > 80) { // 80px for console header + some space
             const editorPercentage = (newEditorHeight / totalHeight) * 100;
-            editorContainer.style.height = `\${editorPercentage}%`;
-            consoleContainer.style.height = `\${100 - editorPercentage}%`;
+            editorContainer.style.height = `${editorPercentage}%`;
+            consoleContainer.style.height = `${100 - editorPercentage}%`;
         }
     }
 });
